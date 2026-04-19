@@ -72,18 +72,34 @@ async def login(request: Request, username: str = Form(...), password: str = For
         return RedirectResponse(url="/", status_code=303)
 
 @app.post("/delete_user")
-async def delete_user(request: Request, username: str = Form(...)):
+async def delete_user(request: Request, username: str = Form(None)):
     current_user = request.session.get("user")
-    if not current_user or username != current_user:
+    
+    # Use session user if form user is missing
+    target_user = username or current_user
+    
+    if not current_user:
+        print("DEBUG: Delete failed - No user in session")
+        raise HTTPException(status_code=401, detail="Authentication required")
+        
+    if target_user != current_user:
+        print(f"DEBUG: Delete failed - User '{current_user}' tried to delete '{target_user}'")
         raise HTTPException(status_code=403, detail="You can only delete your own account")
         
-    print(f"DEBUG: Deleting user '{username}'")
+    print(f"DEBUG: Deleting user '{target_user}'")
     from services.db_service import delete_user_db, get_user
     
-    if not get_user(username):
+    if not get_user(target_user):
+        print(f"DEBUG: Delete failed - User '{target_user}' not found in database")
         return RedirectResponse(url="/", status_code=303)
         
-    delete_user_db(username)
+    try:
+        delete_user_db(target_user)
+        print(f"DEBUG: Successfully deleted user '{target_user}'")
+    except Exception as e:
+        print(f"DEBUG: Error deleting user '{target_user}': {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete account")
+        
     request.session.clear()
     return RedirectResponse(url="/", status_code=303)
 
