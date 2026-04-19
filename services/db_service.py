@@ -137,5 +137,15 @@ def get_all_users():
     conn.close()
     return [row[0] for row in rows if row[0] and row[0] != 'default']
 
+def delete_user_db(username):
+    """Deletes all data associated with a user."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM messages WHERE username = ?', (username,))
+    cursor.execute('DELETE FROM mood_logs WHERE username = ?', (username,))
+    cursor.execute('DELETE FROM journals WHERE username = ?', (username,))
+    conn.commit()
+    conn.close()
+
 # Initialize on import
 init_db()

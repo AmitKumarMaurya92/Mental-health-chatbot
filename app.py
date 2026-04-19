@@ -48,6 +48,19 @@ async def login(username: str = Form(...)):
     response.set_cookie(key="username", value=username)
     return response
 
+@app.post("/delete_user")
+async def delete_user(username: str = Form(...), current_user: str = Cookie(alias="username", default=None)):
+    from services.db_service import delete_user_db
+    delete_user_db(username)
+    
+    # If the user deleted themselves, log them out
+    if username == current_user:
+        response = RedirectResponse(url="/", status_code=303)
+        response.delete_cookie("username")
+        return response
+        
+    return RedirectResponse(url="/", status_code=303)
+
 @app.get("/logout")
 async def logout():
     response = RedirectResponse(url="/", status_code=303)

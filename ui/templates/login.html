@@ -78,32 +78,6 @@
             box-shadow: 0 6px 20px var(--primary-glow);
             filter: brightness(1.1);
         }
-        .user-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 10px;
-        }
-        .user-badge {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--card-border);
-            color: var(--text-main);
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-            font-family: 'Inter', sans-serif;
-            text-transform: capitalize;
-        }
-        .user-badge:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 4px 15px var(--primary-glow);
-            transform: translateY(-2px);
-        }
         .divider {
             display: flex;
             align-items: center;
@@ -132,15 +106,61 @@
         <p>Enter your name to continue your journey.</p>
         
         {% if users %}
-        <div class="user-list">
-            {% for user in users %}
-            <form action="/login" method="POST" style="margin: 0;">
-                <input type="hidden" name="username" value="{{ user }}">
-                <button type="submit" class="user-badge">{{ user }}</button>
-            </form>
-            {% endfor %}
+        <div class="user-list-card" id="user-list-card">
+            <div class="user-list-header" style="justify-content: flex-start; gap: 24px; border-bottom: 1px solid var(--card-border); padding: 32px 24px; background: transparent;">
+                <h3 style="margin: 0; color: #ffffff; font-size: 2rem; font-weight: 800; letter-spacing: -0.03em;">All Users</h3>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div class="power-toggle" title="Logout" onclick="window.location.href='/logout'" style="color: #ffffff; cursor: pointer; transition: all 0.2s; opacity: 0.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                    </div>
+                    <div class="delete-mode-toggle" id="delete-toggle" title="Toggle Delete Mode" style="color: #ffffff; opacity: 0.8; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="user-rows">
+                {% for user in users %}
+                <div class="user-item-row" onclick="handleUserClick('{{ user }}')" style="padding: 24px;">
+                    <span>{{ user }}</span>
+                    <span class="delete-indicator">DELETE</span>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-        
+
+        <form id="login-redirect-form" action="/login" method="POST" style="display: none;">
+            <input type="hidden" name="username" id="login-username">
+        </form>
+
+        <form id="delete-redirect-form" action="/delete_user" method="POST" style="display: none;">
+            <input type="hidden" name="username" id="delete-username">
+        </form>
+
+        <script>
+            let deleteMode = false;
+            const deleteToggle = document.getElementById('delete-toggle');
+            const userListCard = document.getElementById('user-list-card');
+
+            deleteToggle.onclick = (e) => {
+                e.stopPropagation();
+                deleteMode = !deleteMode;
+                deleteToggle.classList.toggle('active', deleteMode);
+                userListCard.classList.toggle('delete-mode', deleteMode);
+            };
+
+            function handleUserClick(username) {
+                if (deleteMode) {
+                    if (confirm(`Delete user "${username}" and all their data?`)) {
+                        document.getElementById('delete-username').value = username;
+                        document.getElementById('delete-redirect-form').submit();
+                    }
+                } else {
+                    document.getElementById('login-username').value = username;
+                    document.getElementById('login-redirect-form').submit();
+                }
+            }
+        </script>
+
         <div class="divider">or create new</div>
         {% endif %}
 
