@@ -1,1 +1,10 @@
-[]
+[
+    {
+        "role": "user",
+        "content": "hi i am not feeling well today"
+    },
+    {
+        "role": "assistant",
+        "content": "I'm currently running in offline mode. Please configure an API key to chat."
+    }
+]

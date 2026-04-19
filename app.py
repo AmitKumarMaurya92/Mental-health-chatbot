@@ -34,13 +34,19 @@ async def chat_endpoint(request: ChatRequest):
 async def home_ui(request: Request):
     """Web UI Home Page."""
     history = load_history()
-    return templates.TemplateResponse("index.html", {"request": request, "history": history})
+    return templates.TemplateResponse(request=request, name="index.html", context={"history": history})
 
 @app.post("/chat_ui", response_class=HTMLResponse)
 async def chat_ui_endpoint(request: Request, message: str = Form(...)):
     """Handles form submissions from the Web UI."""
+    reply = ""
     if message.strip():
-        generate_response(message)
+        reply = generate_response(message)
+    
+    # Check if request is AJAX
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return {"reply": reply}
+        
     # Redirect back to home to reload the updated history
     return RedirectResponse(url="/", status_code=303)
 
