@@ -7,13 +7,25 @@ import os
 from datetime import datetime
 from utils.constants import DATA_DIR
 
+from passlib.context import CryptContext
+
 DB_PATH = os.path.join(DATA_DIR, 'companion.db')
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 def init_db():
     """Initializes the database tables if they don't exist."""
     os.makedirs(DATA_DIR, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    
+    # Users table for authentication
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password_hash TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
     
     # Messages table for chat history
     cursor.execute('''
@@ -58,6 +70,31 @@ def init_db():
     
     conn.commit()
     conn.close()
+
+def get_user(username):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+    user = cursor.fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+def create_user(username, password):
+    hash = pwd_context.hash(password)
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', (username, hash))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
 
 def save_message_db(role, content, username="default"):
     conn = sqlite3.connect(DB_PATH)
@@ -125,14 +162,8 @@ def get_mood_history(days=7, username="default"):
 def get_all_users():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    # Get distinct usernames from all tables to be safe
-    cursor.execute('''
-        SELECT DISTINCT username FROM messages
-        UNION
-        SELECT DISTINCT username FROM mood_logs
-        UNION
-        SELECT DISTINCT username FROM journals
-    ''')
+    # Get all usernames from the users table
+    cursor.execute('SELECT username FROM users')
     rows = cursor.fetchall()
     conn.close()
     return [row[0] for row in rows if row[0] and row[0] != 'default']
@@ -141,6 +172,7 @@ def delete_user_db(username):
     """Deletes all data associated with a user."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    cursor.execute('DELETE FROM users WHERE username = ?', (username,))
     cursor.execute('DELETE FROM messages WHERE username = ?', (username,))
     cursor.execute('DELETE FROM mood_logs WHERE username = ?', (username,))
     cursor.execute('DELETE FROM journals WHERE username = ?', (username,))

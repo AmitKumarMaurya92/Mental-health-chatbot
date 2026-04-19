@@ -1,8 +1,9 @@
 import sys
-from fastapi import FastAPI, HTTPException, Request, Form, Response, Cookie
+from fastapi import FastAPI, HTTPException, Request, Form, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel
 from services.ai_service import generate_response
 from services.memory_service import load_history, clear_history
@@ -11,6 +12,9 @@ from voice.input import listen_and_recognize
 from voice.output import speak_text
 
 app = FastAPI(title="Mental Health AI Companion")
+
+# Enable sessions
+app.add_middleware(SessionMiddleware, secret_key="secure_session_key_for_mental_health_companion")
 
 # Setup templates and static files
 app.mount("/static", StaticFiles(directory="ui/static"), name="static")
@@ -24,62 +28,88 @@ class ChatResponse(BaseModel):
     sentiment: str = "neutral"
 
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest, username: str = Cookie(default="default")):
+async def chat_endpoint(request: Request, chat_req: ChatRequest):
     """Basic text chatbot API endpoint."""
-    if not request.message:
+    username = request.session.get("user")
+    if not username:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not chat_req.message:
         raise HTTPException(status_code=400, detail="Message cannot be empty")
         
-    reply = generate_response(request.message, username=username)
+    reply = generate_response(chat_req.message, username=username)
     # Get emotion for UI
     from services.emotion_service import detect_emotion
-    emotion = detect_emotion(request.message)["emotion"].lower().split("/")[0]
+    emotion = detect_emotion(chat_req.message)["emotion"].lower().split("/")[0]
     
     return ChatResponse(reply=reply, sentiment=emotion)
 
 @app.post("/api/clear_chat")
-async def clear_chat_endpoint(username: str = Cookie(default="default")):
+async def clear_chat_endpoint(request: Request):
     """Clears the chat history."""
+    username = request.session.get("user")
+    if not username:
+        raise HTTPException(status_code=401, detail="Authentication required")
     clear_history(username=username)
     return {"status": "success"}
 
 @app.post("/login")
-async def login(username: str = Form(...)):
-    response = RedirectResponse(url="/", status_code=303)
-    response.set_cookie(key="username", value=username)
-    return response
+async def login(request: Request, username: str = Form(...), password: str = Form(...)):
+    from services.db_service import get_user, create_user, verify_password
+    
+    user = get_user(username)
+    if user:
+        # User exists, check password
+        if verify_password(password, user['password_hash']):
+            request.session["user"] = username
+            return RedirectResponse(url="/", status_code=303)
+        else:
+            # Invalid password
+            return templates.TemplateResponse(request=request, name="login.html", context={"error": "Invalid password for this username. Please try again."})
+    else:
+        # New user, create account
+        create_user(username, password)
+        request.session["user"] = username
+        return RedirectResponse(url="/", status_code=303)
 
 @app.post("/delete_user")
-async def delete_user(username: str = Form(...), current_user: str = Cookie(alias="username", default=None)):
-    from services.db_service import delete_user_db
-    delete_user_db(username)
-    
-    # If the user deleted themselves, log them out
-    if username == current_user:
-        response = RedirectResponse(url="/", status_code=303)
-        response.delete_cookie("username")
-        return response
+async def delete_user(request: Request, username: str = Form(...)):
+    current_user = request.session.get("user")
+    if not current_user or username != current_user:
+        raise HTTPException(status_code=403, detail="You can only delete your own account")
         
+    print(f"DEBUG: Deleting user '{username}'")
+    from services.db_service import delete_user_db, get_user
+    
+    if not get_user(username):
+        return RedirectResponse(url="/", status_code=303)
+        
+    delete_user_db(username)
+    request.session.clear()
     return RedirectResponse(url="/", status_code=303)
 
 @app.get("/logout")
-async def logout():
-    response = RedirectResponse(url="/", status_code=303)
-    response.delete_cookie("username")
-    return response
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=303)
 
 @app.get("/", response_class=HTMLResponse)
-async def home_ui(request: Request, username: str = Cookie(default=None)):
+async def home_ui(request: Request):
     """Web UI Home Page."""
-    from services.db_service import get_all_users
-    users = get_all_users()
+    username = request.session.get("user")
     if not username:
-        return templates.TemplateResponse(request=request, name="login.html", context={"users": users})
+        return templates.TemplateResponse(request=request, name="login.html", context={})
     history = load_history(username=username)
-    return templates.TemplateResponse(request=request, name="index.html", context={"history": history, "username": username, "users": users})
+    return templates.TemplateResponse(request=request, name="index.html", context={"history": history, "username": username})
 
 @app.post("/chat_ui")
-async def chat_ui_endpoint(request: Request, message: str = Form(...), username: str = Cookie(default="default")):
+async def chat_ui_endpoint(request: Request, message: str = Form(...)):
     """Handles form submissions from the Web UI."""
+    username = request.session.get("user")
+    if not username:
+        # Redirect to login if not an AJAX request
+        if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+            return RedirectResponse(url="/", status_code=303)
+        raise HTTPException(status_code=401, detail="Authentication required")
     reply = ""
     sentiment = "neutral"
     if message.strip():
@@ -99,14 +129,20 @@ async def chat_ui_endpoint(request: Request, message: str = Form(...), username:
     return RedirectResponse(url="/", status_code=303)
 
 @app.get("/api/mood_trends")
-async def mood_trends(username: str = Cookie(default="default")):
+async def mood_trends(request: Request):
     """Returns mood data for the last 7 days."""
+    username = request.session.get("user")
+    if not username:
+        raise HTTPException(status_code=401, detail="Authentication required")
     history = get_mood_history(days=7, username=username)
     return {"history": history}
 
 @app.get("/api/weekly_report")
-async def weekly_report(username: str = Cookie(default="default")):
+async def weekly_report(request: Request):
     """Generates an AI summary of the user's emotional state."""
+    username = request.session.get("user")
+    if not username:
+        raise HTTPException(status_code=401, detail="Authentication required")
     from services.memory_service import load_history
     from dashboard.summary import generate_weekly_summary
     

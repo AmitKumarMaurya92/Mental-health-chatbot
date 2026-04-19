@@ -14,6 +14,7 @@
     --bot-msg-bg: rgba(255, 255, 255, 0.05);
     --user-msg-bg: linear-gradient(135deg, #7c3aed, #4c1d95);
     --glass-blur: 24px;
+    --sidebar-width: 280px;
 }
 
 [data-theme="light"] {
@@ -28,6 +29,7 @@
     --text-muted: #64748b;
     --bot-msg-bg: #f1f5f9;
     --user-msg-bg: linear-gradient(135deg, #6366f1, #4f46e5);
+    --sidebar-width: 280px;
 }
 
 /* Mood-Based Dynamic Accents */
