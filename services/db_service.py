@@ -56,6 +56,13 @@ def save_message_db(role, content):
     conn.commit()
     conn.close()
 
+def clear_chat_history_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM messages')
+    conn.commit()
+    conn.close()
+
 def load_history_db(limit=20):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row

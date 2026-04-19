@@ -56,9 +56,14 @@
                         <h1>Support Chat</h1>
                         <p style="font-size: 0.875rem; color: var(--text-muted);">Always listening with empathy</p>
                     </div>
-                    <div class="status-badge">
-                        <div class="status-dot"></div>
-                        Online
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <button id="new-chat-btn" class="action-btn" title="New Conversation" style="width: auto; padding: 6px 12px; border-radius: 8px; font-size: 0.875rem; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-light); cursor: pointer;">
+                            🔄 New Chat
+                        </button>
+                        <div class="status-badge">
+                            <div class="status-dot"></div>
+                            Online
+                        </div>
                     </div>
                 </header>
 
@@ -93,6 +98,10 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
                         </button>
                         
+                        <button type="button" class="action-btn" id="new-chat-inline-btn" title="New Chat">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+
                         <input type="text" id="message-input" placeholder="Share your thoughts..." autocomplete="off" required>
                         
                         <button type="button" class="action-btn" id="tts-toggle" title="Auto-speak Toggle">
@@ -136,7 +145,13 @@
                     <p style="color: var(--text-muted);">Manage your preferences and configurations.</p>
                 </header>
                 <div class="settings-card" style="background: var(--card-bg); padding: 24px; border-radius: 20px; border: 1px solid var(--card-border);">
-                    <p style="color: var(--text-muted);">Settings functionality coming soon.</p>
+                    <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <h3 style="margin-bottom: 4px; color: var(--text-light);">Voice Responses (Text-to-Speech)</h3>
+                            <p style="font-size: 0.875rem; color: var(--text-muted);">Enable or disable automatic voice messages from the agent.</p>
+                        </div>
+                        <button type="button" id="settings-voice-toggle" class="action-btn" style="width: auto; padding: 8px 16px; border-radius: 12px; background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.3s;">Enabled</button>
+                    </div>
                 </div>
             </div>
         </main>
@@ -146,10 +161,12 @@
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
         const chatHistory = document.getElementById('chat-history');
-        const typingIndicator = document.getElementById('typing-indicator');
+        let typingIndicator = document.getElementById('typing-indicator');
         const voiceBtn = document.getElementById('voice-btn');
         const ttsToggle = document.getElementById('tts-toggle');
         const checkinNav = document.getElementById('checkin-nav');
+        const settingsVoiceToggle = document.getElementById('settings-voice-toggle');
+        const newChatBtn = document.getElementById('new-chat-btn');
         
         // Navigation Elements
         const chatNav = document.getElementById('chat-nav');
@@ -166,7 +183,7 @@
         const insightsView = document.getElementById('insights-view');
         const settingsView = document.getElementById('settings-view');
 
-        let isAutoSpeak = true;
+        let isAutoSpeak = false;
         let moodChart = null;
 
         // --- Theme Toggle Logic ---
@@ -341,12 +358,32 @@
             voiceBtn.style.display = 'none';
         }
 
+        function updateVoiceToggleUI() {
+            ttsToggle.style.color = isAutoSpeak ? 'var(--primary)' : 'var(--text-muted)';
+            if (settingsVoiceToggle) {
+                settingsVoiceToggle.textContent = isAutoSpeak ? 'Enabled' : 'Disabled';
+                settingsVoiceToggle.style.background = isAutoSpeak ? 'var(--primary)' : 'rgba(255, 255, 255, 0.1)';
+            }
+        }
+        
+        // Initialize UI
+        updateVoiceToggleUI();
+
         // TTS Toggle
         ttsToggle.onclick = () => {
             isAutoSpeak = !isAutoSpeak;
-            ttsToggle.style.color = isAutoSpeak ? 'var(--primary)' : 'var(--text-muted)';
+            updateVoiceToggleUI();
             if (!isAutoSpeak) window.speechSynthesis.cancel();
         };
+
+        // Settings Voice Toggle
+        if (settingsVoiceToggle) {
+            settingsVoiceToggle.onclick = () => {
+                isAutoSpeak = !isAutoSpeak;
+                updateVoiceToggleUI();
+                if (!isAutoSpeak) window.speechSynthesis.cancel();
+            };
+        }
 
         function speak(text) {
             if (!isAutoSpeak) return;
@@ -414,6 +451,37 @@
             
             await sendToServer(message);
         });
+
+        const clearChat = async () => {
+            try {
+                await fetch('/api/clear_chat', { method: 'POST' });
+                // Clear the UI
+                chatHistory.innerHTML = `
+                    <div class="empty-state" style="text-align: center; margin-top: 100px;">
+                        <h2 style="font-size: 2rem; margin-bottom: 12px;">Hello there. 👋</h2>
+                        <p style="color: var(--text-muted);">I'm here to support you. How are you feeling today?</p>
+                    </div>
+                    <div id="typing-indicator" class="message-wrapper bot-wrapper" style="display: none;">
+                        <div class="message bot-message typing-dots">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                    </div>
+                `;
+                // Re-assign typing indicator reference since it was overwritten
+                typingIndicator = document.getElementById('typing-indicator');
+            } catch (e) {
+                console.error("Failed to clear chat", e);
+            }
+        };
+
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', clearChat);
+        }
+        if (document.getElementById('new-chat-inline-btn')) {
+            document.getElementById('new-chat-inline-btn').addEventListener('click', clearChat);
+        }
     </script>
 </body>
 </html>

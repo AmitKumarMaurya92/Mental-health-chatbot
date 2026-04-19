@@ -1,5 +1,6 @@
 import google.generativeai as genai
-from config import GEMINI_API_KEYS
+from openai import OpenAI
+from config import GEMINI_API_KEYS, GROQ_API_KEY
 from services.sentiment_service import analyze_sentiment, get_sentiment_label
 from services.safety_service import check_safety, get_emergency_response
 from services.suggestion_service import get_suggestion_for_mood
@@ -7,52 +8,49 @@ from services.memory_service import load_history, save_message
 from services.db_service import log_mood
 import random
 
+# Initialize Groq client if available
+groq_client = OpenAI(
+    api_key=GROQ_API_KEY,
+    base_url="https://api.groq.com/openai/v1"
+) if GROQ_API_KEY else None
+
 def get_gemini_model(system_instruction=None):
-    """Configures and returns a Gemini model instance, skipping invalid/leaked keys."""
+    """Configures and returns a Gemini model instance by directly trying preferred models."""
     preferred_models = [
         "gemini-2.0-flash",
-        "gemini-1.5-pro",
         "gemini-1.5-flash",
-        "gemini-1.0"
+        "gemini-1.5-pro",
+        "gemini-1.0-pro",
     ]
-    
+
+    safety_settings = [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
+    ]
+
     for key in GEMINI_API_KEYS:
-        try:
-            genai.configure(api_key=key)
-            available_models = [m.name for m in genai.list_models()]
-            
-            # Choose the first preferred model available on this key
-            model_name = next((m for m in preferred_models if m in available_models), None)
-            if not model_name:
-                # Fall back to any Gemini model that supports text/chat generation
-                for m in genai.list_models():
-                    if m.name.startswith("gemini-") and any(
-                        method in getattr(m, "supported_generation_methods", [])
-                        for method in ["generateMessage", "generateContent", "chat"]
-                    ):
-                        model_name = m.name
-                        break
+        genai.configure(api_key=key)
+        for model_name in preferred_models:
+            try:
+                model = genai.GenerativeModel(
+                    model_name,
+                    system_instruction=system_instruction,
+                    safety_settings=safety_settings
+                )
+                # Quick validation — will throw if key or model is invalid
+                model.generate_content("hi")
+                print(f"[OK] Using Gemini model: {model_name}")
+                return model
+            except Exception as e:
+                print(f"  [WARN] Model '{model_name}' failed: {e}")
+                continue
+        print(f"  [FAIL] All models failed for this key, trying next...")
 
-            if not model_name:
-                raise RuntimeError("No compatible Gemini model found for this API key.")
-
-            safety_settings = [
-                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH"},
-            ]
-
-            model = genai.GenerativeModel(
-                model_name,
-                system_instruction=system_instruction,
-                safety_settings=safety_settings
-            )
-            return model
-        except Exception as e:
-            print(f"Skipping API key due to error: {e}")
-            continue
+    print("[ERROR] No valid API key / model combination found. Falling back to offline mode.")
     return None
+
 
 def generate_response(user_message: str) -> str:
     """Sends a message to the Gemini API and returns the response, incorporating memory, safety and sentiment analysis."""
@@ -83,7 +81,28 @@ def generate_response(user_message: str) -> str:
         f"Naturally suggest this tip if appropriate: '{suggestion}'"
     )
     
-    # 4. Get model with system instruction
+    # 4. Use Groq if available
+    if groq_client:
+        history = load_history()[-10:]
+        messages = [{"role": "system", "content": system_prompt}]
+        for msg in history[:-1]:
+            role = "user" if msg["role"] == "user" else "assistant"
+            messages.append({"role": role, "content": msg["content"]})
+        messages.append({"role": "user", "content": user_message})
+
+        try:
+            response = groq_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                temperature=0.7
+            )
+            ai_reply = response.choices[0].message.content.strip()
+            save_message("assistant", ai_reply)
+            return ai_reply
+        except Exception as e:
+            print(f"[WARN] Groq failed: {e}. Falling back to Gemini.")
+            
+    # 5. Get model with system instruction (Fallback to Gemini)
     model = get_gemini_model(system_instruction=system_prompt)
         
     if not model:
@@ -97,10 +116,12 @@ def generate_response(user_message: str) -> str:
         save_message("assistant", reply)
         return reply
         
-    # 5. Load Conversation Memory (last 10 messages)
+        return reply
+        
+    # 6. Load Conversation Memory (last 10 messages)
     history = load_history()[-10:]
     
-    # 6. Convert history to Gemini format
+    # 7. Convert history to Gemini format
     chat_history = []
     # Gemini history shouldn't include the current message yet
     for msg in history[:-1]: 

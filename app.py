@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from services.ai_service import generate_response
-from services.memory_service import load_history
+from services.memory_service import load_history, clear_history
 from services.db_service import get_mood_history
 from services.journaling_service import analyze_and_save_journal, fetch_all_journals
 from voice.input import listen_and_recognize
@@ -37,6 +37,12 @@ async def chat_endpoint(request: ChatRequest):
     sentiment = history[-1]["label"] if history else "neutral"
     
     return ChatResponse(reply=reply, sentiment=sentiment)
+
+@app.post("/api/clear_chat")
+async def clear_chat_endpoint():
+    """Clears the chat history."""
+    clear_history()
+    return {"status": "success"}
 
 @app.get("/", response_class=HTMLResponse)
 async def home_ui(request: Request):
