@@ -31,6 +31,7 @@
 }
 
 /* Mood-Based Dynamic Accents */
-.mood-negative { --primary: #f43f5e; --primary-glow: rgba(244, 63, 94, 0.3); }
-.mood-positive { --primary: #10b981; --primary-glow: rgba(16, 185, 129, 0.3); }
+.mood-sad { --primary: #3b82f6; --primary-glow: rgba(59, 130, 246, 0.3); }
+.mood-happy { --primary: #eab308; --primary-glow: rgba(234, 179, 8, 0.3); }
+.mood-angry { --primary: #ef4444; --primary-glow: rgba(239, 68, 68, 0.3); }
 .mood-neutral { --primary: #a78bfa; --primary-glow: rgba(167, 139, 250, 0.3); }

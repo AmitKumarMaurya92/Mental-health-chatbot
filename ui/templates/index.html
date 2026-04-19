@@ -10,8 +10,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .theme-toggle-floating {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 2000;
+            font-size: 1.25rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 20px -6px rgba(0,0,0,0.3);
+        }
+        .theme-toggle-floating:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 12px 24px -6px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] .theme-toggle-floating {
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 20px -6px rgba(0,0,0,0.1);
+        }
+        [data-theme="light"] .theme-toggle-floating:hover {
+            background: #fff;
+        }
+    </style>
 </head>
 <body>
+
+    <div class="theme-toggle-floating" id="theme-toggle" title="Toggle Theme">
+        <span id="theme-icon">🌙</span>
+    </div>
 
     <div class="app-container">
         <!-- Sidebar -->
@@ -31,13 +68,28 @@
                 <div class="nav-item" id="insights-nav">
                     <span>📊</span> Mood Insights
                 </div>
-                <div class="nav-item" id="theme-toggle">
-                    <span id="theme-icon">🌙</span> <span id="theme-text">Switch Theme</span>
-                </div>
+
             </nav>
 
-            <div class="sidebar-footer">
-                <p style="font-size: 0.75rem; color: var(--text-muted);">Session: Active</p>
+            <div class="sidebar-footer" style="padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-size: 0.85rem; color: var(--text-color); margin: 0; font-weight: 500;">User: {{ username }}</p>
+                <a href="/logout" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; margin-top: 6px; display: inline-block;">Switch User / Logout</a>
+                
+                {% if users|length > 1 or (users|length == 1 and users[0] != username) %}
+                <div class="switch-user-list" style="margin-top: 15px;">
+                    <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Quick Switch:</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        {% for user in users %}
+                            {% if user != username %}
+                            <form action="/login" method="POST" style="margin: 0;">
+                                <input type="hidden" name="username" value="{{ user }}">
+                                <button type="submit" class="mini-user-badge">{{ user }}</button>
+                            </form>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </aside>
 
@@ -46,11 +98,8 @@
             <!-- Chat View -->
             <div id="chat-view" class="view-section">
                 <header class="chat-header">
-                    <div class="header-left">
-                        <h1>Support Chat</h1>
-                        <p style="font-size: 0.875rem; color: var(--text-muted);">Always listening with empathy</p>
-                    </div>
-                    <div style="display: flex; gap: 12px; align-items: center;">
+                    <div class="header-left" style="display: flex; align-items: center; gap: 16px;">
+                        <h1 style="margin: 0;">{{ username }}</h1>
                         <div class="status-badge">
                             <div class="status-dot"></div>
                             Online
@@ -128,7 +177,6 @@
         const insightsNav = document.getElementById('insights-nav');
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
-        const themeText = document.getElementById('theme-text');
         
         // Views
         const chatView = document.getElementById('chat-view');
@@ -136,13 +184,13 @@
 
         let isAutoSpeak = false;
         let moodChart = null;
+        let moodPieChart = null;
 
         // --- Theme Toggle Logic ---
         themeToggle.onclick = () => {
             const isDark = document.body.getAttribute('data-theme') !== 'light';
             document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
             themeIcon.textContent = isDark ? '☀️' : '🌙';
-            themeText.textContent = isDark ? 'Light Mode' : 'Dark Mode';
         };
 
         // --- View Switching Logic ---
@@ -169,9 +217,19 @@
             const response = await fetch('/api/mood_trends');
             const data = await response.json();
             
+            // Fetch weekly report asynchronously
+            fetch('/api/weekly_report').then(res => res.json()).then(reportData => {
+                const summaryText = document.getElementById('summary-text');
+                if (summaryText) {
+                    summaryText.innerHTML = reportData.improvement_text + '<br><br>' + reportData.summary;
+                }
+            }).catch(e => console.error("Error fetching weekly report:", e));
+            
             const ctx = document.getElementById('moodChart').getContext('2d');
+            const pieCtx = document.getElementById('moodPieChart').getContext('2d');
             
             if (moodChart) moodChart.destroy();
+            if (moodPieChart) moodPieChart.destroy();
             
             const labels = data.history.map(h => new Date(h.timestamp).toLocaleDateString());
             const scores = data.history.map(h => h.score);
@@ -199,6 +257,69 @@
                         x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
                     },
                     plugins: { legend: { display: false } }
+                }
+            });
+
+            // Pie Chart Logic
+            let counts = { Happy: 0, Sad: 0, Angry: 0, Neutral: 0 };
+            data.history.forEach(h => {
+                if (h.label === 'positive') counts.Happy++;
+                else if (h.label === 'neutral') counts.Neutral++;
+                else if (h.label === 'negative') {
+                    if (h.score < -0.5) counts.Angry++;
+                    else counts.Sad++;
+                } else {
+                    counts.Neutral++;
+                }
+            });
+            
+            let total = counts.Happy + counts.Sad + counts.Angry + counts.Neutral;
+            if (total === 0) counts.Neutral = 1;
+
+            moodPieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Happy 😊', 'Sad 😢', 'Angry 😠', 'Neutral 😐'],
+                    datasets: [{
+                        data: [counts.Happy, counts.Sad, counts.Angry, counts.Neutral],
+                        backgroundColor: [
+                            '#10b981', // Happy - Green
+                            '#3b82f6', // Sad - Blue
+                            '#ef4444', // Angry - Red
+                            '#94a3b8'  // Neutral - Gray
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#94a3b8',
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ' → ';
+                                    }
+                                    let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    let value = context.raw;
+                                    let percentage = total > 0 ? Math.round((value / total) * 100) + '%' : '0%';
+                                    return label + percentage;
+                                }
+                            }
+                        }
+                    }
                 }
             });
         }
@@ -321,8 +442,8 @@
                 appendMessage('assistant', data.reply);
                 
                 // --- Emotion-based UI color change ---
-                document.body.classList.remove('mood-negative', 'mood-positive', 'mood-neutral');
-                document.body.classList.add(`mood-${data.sentiment}`);
+                document.body.classList.remove('mood-sad', 'mood-happy', 'mood-angry', 'mood-neutral', 'mood-negative', 'mood-positive');
+                document.body.classList.add(`mood-${data.sentiment.toLowerCase()}`);
             } catch (err) {
                 typingIndicator.style.display = 'none';
                 appendMessage('assistant', 'I am sorry, I had trouble connecting. Please try again.');

@@ -1,5 +1,5 @@
 <!-- dashboard.html -->
-<div id="insights-view" class="view-section" style="display: none; padding: 40px;">
+<div id="insights-view" class="view-section" style="display: none; padding: 40px; overflow-y: auto;">
     <header style="margin-bottom: 30px;">
         <h1>Your Insights</h1>
         <p style="color: var(--text-muted);">Understanding your emotional journey.</p>
@@ -9,6 +9,13 @@
         <h3>Mood Trends (Last 7 Days)</h3>
         <div style="height: 300px; margin-top: 20px;">
             <canvas id="moodChart"></canvas>
+        </div>
+    </div>
+
+    <div class="insight-card" style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--card-border); margin-bottom: 30px;">
+        <h3>Mood Distribution</h3>
+        <div style="height: 300px; margin-top: 20px; display: flex; justify-content: center;">
+            <canvas id="moodPieChart"></canvas>
         </div>
     </div>
 

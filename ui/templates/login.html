@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AI Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: var(--bg-gradient);
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+        }
+        .login-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--card-border);
+        }
+        .login-card h1 {
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 10px;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+        .login-card p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .login-input {
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .login-input::placeholder {
+            color: var(--text-muted);
+        }
+        .login-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-glow);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .login-btn {
+            background: var(--user-msg-bg);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--primary-glow);
+            filter: brightness(1.1);
+        }
+        .user-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .user-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            text-transform: capitalize;
+        }
+        .user-badge:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-muted);
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .divider:not(:empty)::before {
+            margin-right: .5em;
+        }
+        .divider:not(:empty)::after {
+            margin-left: .5em;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="login-card">
+        <div class="logo-circle" style="margin: 0 auto 20px auto; width: 60px; height: 60px; font-size: 1.5rem;">✨</div>
+        <h1>Welcome Back</h1>
+        <p>Enter your name to continue your journey.</p>
+        
+        {% if users %}
+        <div class="user-list">
+            {% for user in users %}
+            <form action="/login" method="POST" style="margin: 0;">
+                <input type="hidden" name="username" value="{{ user }}">
+                <button type="submit" class="user-badge">{{ user }}</button>
+            </form>
+            {% endfor %}
+        </div>
+        
+        <div class="divider">or create new</div>
+        {% endif %}
+
+        <form class="login-form" action="/login" method="POST">
+            <input type="text" name="username" class="login-input" placeholder="Your Name" required {% if not users %}autofocus{% endif %}>
+            <button type="submit" class="login-btn">Start Chatting</button>
+        </form>
+    </div>
+</body>
+</html>

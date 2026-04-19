@@ -14,9 +14,9 @@ from services.memory_service import save_message
 from services.sentiment_service import analyze_sentiment, get_sentiment_label
 from voice.output import speak_text
 
-def run_checkin():
+def run_checkin(username="default"):
     print("\n" + "="*40)
-    print("🌟 DAILY MENTAL HEALTH CHECK-IN 🌟")
+    print(f"🌟 DAILY MENTAL HEALTH CHECK-IN FOR {username.upper()} 🌟")
     print("="*40 + "\n")
     
     greeting = "Hello! I'm your AI Companion. How are you feeling today? (Type your response or 'exit' to quit)"
@@ -35,10 +35,10 @@ def run_checkin():
     
     # Save to memory as a specific check-in event
     checkin_msg = f"[DAILY CHECK-IN] User is feeling {mood.upper()}. Content: {user_input}"
-    save_message("user", checkin_msg)
+    save_message("user", checkin_msg, username)
     
     # Generate an empathetic response
-    response = generate_response(user_input)
+    response = generate_response(user_input, username)
     
     print(f"\nAI: {response}")
     speak_text(response)
@@ -48,4 +48,5 @@ def run_checkin():
     print("="*40 + "\n")
 
 if __name__ == "__main__":
-    run_checkin()
+    username = sys.argv[1] if len(sys.argv) > 1 else "default"
+    run_checkin(username)

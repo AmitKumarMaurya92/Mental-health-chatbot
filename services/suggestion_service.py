@@ -15,12 +15,16 @@ GROUNDING_TECHNIQUES = [
     "Grab an object near you. Focus entirely on its texture, temperature, and weight in your hand."
 ]
 
-def get_suggestion_for_mood(sentiment_label: str) -> str:
-    """Returns a gentle suggestion based on the detected sentiment."""
-    if sentiment_label == "negative":
-        # Offer a grounding or breathing exercise when they are down
-        tips = BREATHING_EXERCISES + GROUNDING_TECHNIQUES
-        return random.choice(tips)
+def get_suggestion_for_mood(sentiment_label: str, user_text: str = "") -> str:
+    """Returns a gentle suggestion based on the detected sentiment and user text."""
+    text_lower = user_text.lower()
+    
+    if any(word in text_lower for word in ["stress", "exam", "work", "overwhelmed", "anxious"]):
+        return "Try breaking your tasks into smaller steps. A simple study or work plan can help reduce stress."
+    elif any(word in text_lower for word in ["angry", "mad", "frustrated", "hate"]):
+        return "Try stepping away for a moment. Take a deep breath, and maybe try some calming techniques like counting to 10."
+    elif sentiment_label == "negative" or any(word in text_lower for word in ["sad", "depressed", "down"]):
+        return "Try taking a few deep breaths, and consider talking to a close friend or family member about how you feel."
     elif sentiment_label == "positive":
         return "Keep focusing on what's going well! Maybe write down one thing you're grateful for today."
     else:

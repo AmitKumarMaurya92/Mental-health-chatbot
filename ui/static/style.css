@@ -134,14 +134,20 @@ body {
 
 .input-glass {
     background: var(--card-bg);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--card-border);
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
     border-radius: 24px;
     padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
 }
 
 [data-theme="light"] .input-glass {
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+    background: rgba(255, 255, 255, 0.8);
 }
 
 .status-badge {
@@ -212,22 +218,6 @@ body {
 }
 
 /* Input Area */
-.chat-input-container {
-    padding: 30px 40px;
-    background: linear-gradient(to top, rgba(15, 23, 42, 0.8), transparent);
-}
-
-.input-glass {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--card-border);
-    border-radius: 20px;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.3s ease;
-}
 
 .input-glass:focus-within {
     border-color: var(--primary);
@@ -239,7 +229,7 @@ body {
     background: transparent;
     border: none;
     padding: 12px 16px;
-    color: white;
+    color: var(--text-main);
     font-size: 1rem;
     font-family: inherit;
     outline: none;
@@ -342,5 +332,25 @@ body {
     max-width: 500px;
     margin: 0 auto;
     line-height: 1.6;
+}
+
+.mini-user-badge {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    text-transform: capitalize;
+}
+
+.mini-user-badge:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-1px);
 }
 

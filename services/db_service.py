@@ -19,6 +19,7 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT DEFAULT 'default',
             role TEXT NOT NULL,
             content TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -29,6 +30,7 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS journals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT DEFAULT 'default',
             title TEXT,
             content TEXT NOT NULL,
             mood_tag TEXT,
@@ -40,34 +42,42 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS mood_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT DEFAULT 'default',
             score REAL NOT NULL,
             label TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     
+    # Migrations for existing DB
+    for table in ['messages', 'journals', 'mood_logs']:
+        try:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN username TEXT DEFAULT 'default'")
+        except sqlite3.OperationalError:
+            pass # Column already exists
+    
     conn.commit()
     conn.close()
 
-def save_message_db(role, content):
+def save_message_db(role, content, username="default"):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO messages (role, content) VALUES (?, ?)', (role, content))
+    cursor.execute('INSERT INTO messages (username, role, content) VALUES (?, ?, ?)', (username, role, content))
     conn.commit()
     conn.close()
 
-def clear_chat_history_db():
+def clear_chat_history_db(username="default"):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM messages')
+    cursor.execute('DELETE FROM messages WHERE username = ?', (username,))
     conn.commit()
     conn.close()
 
-def load_history_db(limit=20):
+def load_history_db(limit=20, username="default"):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute('SELECT role, content, timestamp FROM messages ORDER BY timestamp DESC LIMIT ?', (limit,))
+    cursor.execute('SELECT role, content, timestamp FROM messages WHERE username = ? ORDER BY timestamp DESC LIMIT ?', (username, limit))
     rows = cursor.fetchall()
     conn.close()
     
@@ -75,42 +85,57 @@ def load_history_db(limit=20):
     history = [{"role": row["role"], "content": row["content"], "timestamp": row["timestamp"]} for row in rows]
     return history[::-1]
 
-def save_journal(content, title=None, mood_tag=None):
+def save_journal(content, title=None, mood_tag=None, username="default"):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO journals (title, content, mood_tag) VALUES (?, ?, ?)', (title, content, mood_tag))
+    cursor.execute('INSERT INTO journals (username, title, content, mood_tag) VALUES (?, ?, ?, ?)', (username, title, content, mood_tag))
     conn.commit()
     conn.close()
 
-def get_journals():
+def get_journals(username="default"):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute('SELECT id, title, content, mood_tag, timestamp FROM journals ORDER BY timestamp DESC')
+    cursor.execute('SELECT id, title, content, mood_tag, timestamp FROM journals WHERE username = ? ORDER BY timestamp DESC', (username,))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
 
-def log_mood(score, label):
+def log_mood(score, label, username="default"):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('INSERT INTO mood_logs (score, label) VALUES (?, ?)', (score, label))
+    cursor.execute('INSERT INTO mood_logs (username, score, label) VALUES (?, ?, ?)', (username, score, label))
     conn.commit()
     conn.close()
 
-def get_mood_history(days=7):
+def get_mood_history(days=7, username="default"):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute('''
         SELECT score, label, timestamp 
         FROM mood_logs 
-        WHERE timestamp >= date('now', ?) 
+        WHERE username = ? AND timestamp >= date('now', ?) 
         ORDER BY timestamp ASC
-    ''', (f'-{days} days',))
+    ''', (username, f'-{days} days'))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+def get_all_users():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    # Get distinct usernames from all tables to be safe
+    cursor.execute('''
+        SELECT DISTINCT username FROM messages
+        UNION
+        SELECT DISTINCT username FROM mood_logs
+        UNION
+        SELECT DISTINCT username FROM journals
+    ''')
+    rows = cursor.fetchall()
+    conn.close()
+    return [row[0] for row in rows if row[0] and row[0] != 'default']
 
 # Initialize on import
 init_db()

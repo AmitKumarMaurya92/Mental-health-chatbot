@@ -4,7 +4,10 @@ Safety service to detect critical situations and provide emergency guidance.
 import re
 
 # List of critical keywords and phrases that trigger a safety response
-critical_words = ["suicide", "kill myself", "hopeless", "want to die", "end my life"]
+critical_words = [
+    "suicide", "kill myself", "hopeless", "want to die", "end my life",
+    "i want to die", "i feel hopeless", "no reason to live"
+]
 
 EMERGENCY_RESPONSE = (
     "⚠️ I am so sorry you are feeling this way, but please know you are not alone. "

@@ -52,38 +52,39 @@ def get_gemini_model(system_instruction=None):
     return None
 
 
-def generate_response(user_message: str) -> str:
+def generate_response(user_message: str, username: str = "default") -> str:
     """Sends a message to the Gemini API and returns the response, incorporating memory, safety and sentiment analysis."""
     
     # 0. Save the user's message to memory immediately
-    save_message("user", user_message)
+    save_message("user", user_message, username)
 
     # 1. Internal Safety Check (Keyword based for immediate crisis)
     if not check_safety(user_message):
         reply = get_emergency_response()
-        save_message("assistant", reply)
+        save_message("assistant", reply, username)
         return reply
         
     # 2. Analyze sentiment and get suggestions
     sentiment_scores = analyze_sentiment(user_message)
     sentiment_label = get_sentiment_label(sentiment_scores['compound'])
-    suggestion = get_suggestion_for_mood(sentiment_label)
+    suggestion = get_suggestion_for_mood(sentiment_label, user_message)
     
     # 2.5 Log mood for tracking
-    log_mood(sentiment_scores['compound'], sentiment_label)
+    log_mood(sentiment_scores['compound'], sentiment_label, username)
     
     # 3. Build system prompt
     system_prompt = (
-        "You are a gentle, supportive, and empathetic mental health companion. "
+        f"You are a gentle, supportive, and empathetic mental health companion speaking to {username}. "
         f"The user's current emotional tone is: {sentiment_label.upper()}. "
         "Adapt your response accordingly. Be extra empathetic if they are struggling. "
         "Keep responses concise, warm, and conversational. "
-        f"Naturally suggest this tip if appropriate: '{suggestion}'"
+        f"Naturally suggest this tip if appropriate: '{suggestion}'. "
+        "IMPORTANT: If the user speaks in Hindi, English, or a mix of both (Hinglish), reply in the same language. Always support English and Hindi."
     )
     
     # 4. Use Groq if available
     if groq_client:
-        history = load_history()[-10:]
+        history = load_history(username)[-10:]
         messages = [{"role": "system", "content": system_prompt}]
         for msg in history[:-1]:
             role = "user" if msg["role"] == "user" else "assistant"
@@ -97,7 +98,7 @@ def generate_response(user_message: str) -> str:
                 temperature=0.7
             )
             ai_reply = response.choices[0].message.content.strip()
-            save_message("assistant", ai_reply)
+            save_message("assistant", ai_reply, username)
             return ai_reply
         except Exception as e:
             print(f"[WARN] Groq failed: {e}. Falling back to Gemini.")
@@ -113,13 +114,13 @@ def generate_response(user_message: str) -> str:
             "I've received your message! I'm here for you, even in my limited state."
         ]
         reply = random.choice(mock_responses)
-        save_message("assistant", reply)
+        save_message("assistant", reply, username)
         return reply
         
         return reply
         
     # 6. Load Conversation Memory (last 10 messages)
-    history = load_history()[-10:]
+    history = load_history(username)[-10:]
     
     # 7. Convert history to Gemini format
     chat_history = []
@@ -137,11 +138,11 @@ def generate_response(user_message: str) -> str:
         ai_reply = response.text.strip()
         
         # Save the AI's reply to memory
-        save_message("assistant", ai_reply)
+        save_message("assistant", ai_reply, username)
         return ai_reply
         
     except Exception as e:
         reply = f"I'm sorry, I'm having a bit of trouble thinking right now. Could you try again? (Error: {str(e)})"
-        save_message("assistant", reply)
+        save_message("assistant", reply, username)
         return reply
 
