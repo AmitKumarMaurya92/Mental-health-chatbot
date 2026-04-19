@@ -4,10 +4,7 @@ Safety service to detect critical situations and provide emergency guidance.
 import re
 
 # List of critical keywords and phrases that trigger a safety response
-CRITICAL_KEYWORDS = [
-    "suicide", "kill myself", "want to die", "end my life", "end it all",
-    "harm myself", "hurt myself", "better off dead", "no reason to live"
-]
+critical_words = ["suicide", "kill myself", "hopeless", "want to die", "end my life"]
 
 EMERGENCY_RESPONSE = (
     "⚠️ I am so sorry you are feeling this way, but please know you are not alone. "
@@ -20,19 +17,13 @@ EMERGENCY_RESPONSE = (
     "Please talk to someone who can support you right now."
 )
 
+def is_critical(text):
+    """Checks if the user's message contains any critical keywords."""
+    return any(word in text.lower() for word in critical_words)
+
 def check_safety(user_message: str) -> bool:
-    """
-    Checks the user's message against critical keywords.
-    Returns False if the message is flagged as a crisis, True if it is safe.
-    """
-    message_lower = user_message.lower()
-    
-    # Check for exact keyword matches
-    for keyword in CRITICAL_KEYWORDS:
-        if re.search(rf"\b{re.escape(keyword)}\b", message_lower):
-            return False
-            
-    return True
+    """Returns False if the message is critical, True otherwise."""
+    return not is_critical(user_message)
 
 def get_emergency_response() -> str:
     """Returns a hardcoded emergency response for critical situations."""

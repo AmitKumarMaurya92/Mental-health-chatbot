@@ -1,38 +1,54 @@
-# AI Voice-Based Mental Health Companion
+# AI Voice-Based Mental Health Companion ✨
 
-An AI-powered mental health chatbot built with Python, FastAPI, and Google Gemini. It aims to provide a gentle, supportive, and safe conversational experience with emotion-sensitive responses and built-in safety checks.
+An empathetic, AI-powered mental health companion built with **Python**, **FastAPI**, and **Google Gemini 1.5 Flash**. This companion provides a gentle, supportive space with emotion-sensitive responses, real-time safety checks, seamless voice interaction, and persistent mood tracking.
 
-## Current Progress
+![UI Mockup](https://raw.githubusercontent.com/AmitKumarMaurya92/Mental-health-chatbot/main/docs/ui_mockup.png)
 
-- [x] **Step 1:** Text chatbot (AI API working)
-- [x] **Step 2:** Add sentiment analysis
-- [x] **Step 3:** Add safety checks
-- [x] **Step 4:** Add suggestions
-- [x] **Step 5:** Add voice input/output
-- [x] **Step 6:** Add memory (context)
-- [x] **Step 7:** Optional UI
+## ✨ Phase 1: Core Essentials (Must-Have)
+- **Empathetic Conversations**: Powered by Google Gemini with custom system instructions.
+- **Sentiment Analysis**: Real-time mood detection using VADER.
+- **Voice-Enabled**: Integrated Speech-to-Text (STT) and Text-to-Speech (TTS).
+- **Safety First**: Immediate crisis detection and emergency resource guidance.
+- **Suggestions**: Mood-based activities and coping strategies.
 
-## Features
-- **Human-like Conversation**: Uses Google Gemini API for intelligence.
-- **Emotion-Sensitive**: Upcoming feature to detect mood and adapt tone.
-- **Voice Capabilities**: Upcoming feature for hands-free speech input/output.
-- **Safety**: Built-in rules to detect crisis situations.
+## 🚀 Phase 2: Strong Features (Persistence & Insights)
+- **SQLite Persistence**: Robust database storage for chats, journals, and mood logs.
+- **AI Journaling Assistant**: Write reflections and receive warm, AI-powered feedback.
+- **Mood Dashboard**: Interactive **Chart.js** graphs to visualize your emotional journey.
+- **Weekly Analytics**: Automatic calculation of average mood and frequent emotions.
+- **Memory Context**: AI remembers your history to provide personalized support.
 
-## Setup Instructions
+## 💎 Phase 3: Premium Features (Reactive UI)
+- **Emotion-Based UI Morphing**: The interface colors change dynamically based on your mood (e.g., Sad → Red, Happy → Green).
+- **Dark/Light Mode**: Seamless theme switching with persistent preferences.
+- **Advanced Dashboard**: Modular analytics with Matplotlib Fallback for static reporting.
+- **Scheduled Check-ins**: Background scheduler for daily mental health reminders.
 
-1. Install dependencies:
+## 🛠️ Project Structure
+```text
+mental-health-voice-chatbot/
+├── app.py                     # Main application & Scheduler
+├── services/                  # AI, Safety, Sentiment, Journaling, Analytics
+├── dashboard/                 # Mood plotting & Weekly summaries
+├── voice/                     # CLI Voice input/output
+├── data/                      # SQLite DB, logs, and generated charts
+├── ui/                        # Glassmorphic templates and themes
+└── utils/                     # Helper functions and constants
+```
+
+## 🚀 Quick Start
+
+1. **Clone & Setup**:
    ```bash
+   git clone https://github.com/AmitKumarMaurya92/Mental-health-chatbot.git
+   cd mental-health-chatbot
    pip install -r requirements.txt
    ```
-2. Set your Gemini API keys in a `.env` file:
-   ```env
-   GEMINI_API_KEY_1=your_key_1
-   GEMINI_API_KEY_2=your_key_2
-   GEMINI_API_KEY_3=your_key_3
-   ```
-3. Run the application:
+2. **Configure**: Add `GEMINI_API_KEY_1` to your `.env` file.
+3. **Run**:
    ```bash
-   uvicorn app:app --reload
+   python app.py
    ```
 
-*(Note: This README will be updated continuously as new features are added)*
+---
+*Disclaimer: This AI is for companionship only and is not a replacement for professional medical help.*

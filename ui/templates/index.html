@@ -3,75 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mental Health Companion</title>
+    <title>AI Companion | Mental Health Support</title>
+    <meta name="description" content="Your empathetic AI companion for mental well-being.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <div class="chat-container">
-        <header class="chat-header">
-            <div class="avatar">✨</div>
-            <div class="header-info">
-                <h1>AI Companion</h1>
-                <p>Always here to listen and support you.</p>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle">✨</div>
+                <h2>Companion</h2>
             </div>
-        </header>
-
-        <main class="chat-history">
-            {% if history|length == 0 %}
-                <div class="empty-state">
-                    <p>No messages yet. Say hello! 👋</p>
-                </div>
-            {% endif %}
             
-            {% for msg in history %}
-                <div class="message-wrapper {{ 'user-wrapper' if msg.role == 'user' else 'bot-wrapper' }}">
-                    <div class="message {{ 'user-message' if msg.role == 'user' else 'bot-message' }}">
-                        {{ msg.content }}
+            <nav class="sidebar-nav">
+                <div class="nav-item active" id="chat-nav">
+                    <span>💬</span> Support Chat
+                </div>
+                <div class="nav-item" id="checkin-nav">
+                    <span>📅</span> Daily Check-in
+                </div>
+                <div class="nav-item" id="journal-nav">
+                    <span>📓</span> Reflection Journal
+                </div>
+                <div class="nav-item" id="insights-nav">
+                    <span>📊</span> Mood Insights
+                </div>
+                <div class="nav-item" id="theme-toggle">
+                    <span id="theme-icon">🌙</span> <span id="theme-text">Switch Theme</span>
+                </div>
+                <div class="nav-item" id="settings-nav">
+                    <span>⚙️</span> Settings
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Session: Active</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="chat-main">
+            <!-- Chat View -->
+            <div id="chat-view" class="view-section">
+                <header class="chat-header">
+                    <div class="header-left">
+                        <h1>Support Chat</h1>
+                        <p style="font-size: 0.875rem; color: var(--text-muted);">Always listening with empathy</p>
+                    </div>
+                    <div class="status-badge">
+                        <div class="status-dot"></div>
+                        Online
+                    </div>
+                </header>
+
+                <div class="chat-history" id="chat-history">
+                    {% if history|length == 0 %}
+                        <div class="empty-state" style="text-align: center; margin-top: 100px;">
+                            <h2 style="font-size: 2rem; margin-bottom: 12px;">Hello there. 👋</h2>
+                            <p style="color: var(--text-muted);">I'm here to support you. How are you feeling today?</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% for msg in history %}
+                        <div class="message-wrapper {{ 'user-wrapper' if msg.role == 'user' else 'bot-wrapper' }}">
+                            <div class="message {{ 'user-message' if msg.role == 'user' else 'bot-message' }}">
+                                {{ msg.content }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <div id="typing-indicator" class="message-wrapper bot-wrapper" style="display: none;">
+                        <div class="message bot-message typing-dots">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
                     </div>
                 </div>
-            {% endfor %}
-            
-            <!-- Typing Indicator (hidden by default) -->
-            <div id="typing-indicator" class="message-wrapper bot-wrapper" style="display: none;">
-                <div class="message bot-message typing">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
+
+                <footer class="chat-input-container">
+                    <form id="chat-form" class="input-glass">
+                        <button type="button" class="action-btn voice-btn" id="voice-btn" title="Voice Input">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                        </button>
+                        
+                        <input type="text" id="message-input" placeholder="Share your thoughts..." autocomplete="off" required>
+                        
+                        <button type="button" class="action-btn" id="tts-toggle" title="Auto-speak Toggle">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                        </button>
+
+                        <button type="submit" class="action-btn send-btn" id="send-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </form>
+                </footer>
+            </div>
+
+            <!-- Journal View -->
+            <div id="journal-view" class="view-section" style="display: none; padding: 40px;">
+                <header style="margin-bottom: 30px;">
+                    <h1>Personal Journal</h1>
+                    <p style="color: var(--text-muted);">Reflect on your day and capture your thoughts.</p>
+                </header>
+                
+                <div class="journal-input-card" style="background: var(--card-bg); padding: 24px; border-radius: 20px; border: 1px solid var(--card-border); margin-bottom: 40px;">
+                    <input type="text" id="journal-title" placeholder="Title (e.g., A peaceful afternoon)" style="width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--card-border); color: white; padding: 12px 0; margin-bottom: 16px; font-size: 1.1rem; outline: none;">
+                    <textarea id="journal-content" placeholder="Write from the heart..." style="width: 100%; height: 150px; background: transparent; border: none; color: #e2e8f0; font-family: inherit; font-size: 1rem; resize: none; outline: none;"></textarea>
+                    <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
+                        <button id="save-journal-btn" class="action-btn send-btn" style="width: auto; padding: 0 24px; border-radius: 12px;">Save Entry</button>
+                    </div>
+                </div>
+
+                <div id="journal-list">
+                    <!-- Journal entries will appear here -->
                 </div>
             </div>
 
-            <!-- Anchor to scroll to bottom naturally -->
-            <div id="bottom"></div>
-        </main>
+            <!-- Insights View -->
+            {% include 'dashboard.html' %}
 
-        <footer class="chat-input-area">
-            <form id="chat-form" class="input-form">
-                <input type="text" name="message" id="message-input" placeholder="Type how you're feeling..." autocomplete="off" required autofocus>
-                <button type="submit" id="send-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                </button>
-            </form>
-        </footer>
+            <!-- Settings View -->
+            <div id="settings-view" class="view-section" style="display: none; padding: 40px;">
+                <header style="margin-bottom: 30px;">
+                    <h1>Settings</h1>
+                    <p style="color: var(--text-muted);">Manage your preferences and configurations.</p>
+                </header>
+                <div class="settings-card" style="background: var(--card-bg); padding: 24px; border-radius: 20px; border: 1px solid var(--card-border);">
+                    <p style="color: var(--text-muted);">Settings functionality coming soon.</p>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
-        const chatHistory = document.querySelector('.chat-history');
+        const chatHistory = document.getElementById('chat-history');
         const typingIndicator = document.getElementById('typing-indicator');
-        const sendBtn = document.getElementById('send-btn');
+        const voiceBtn = document.getElementById('voice-btn');
+        const ttsToggle = document.getElementById('tts-toggle');
+        const checkinNav = document.getElementById('checkin-nav');
+        
+        // Navigation Elements
+        const chatNav = document.getElementById('chat-nav');
+        const journalNav = document.getElementById('journal-nav');
+        const insightsNav = document.getElementById('insights-nav');
+        const settingsNav = document.getElementById('settings-nav');
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+        
+        // Views
+        const chatView = document.getElementById('chat-view');
+        const journalView = document.getElementById('journal-view');
+        const insightsView = document.getElementById('insights-view');
+        const settingsView = document.getElementById('settings-view');
 
-        // Scroll to bottom helper
+        let isAutoSpeak = true;
+        let moodChart = null;
+
+        // --- Theme Toggle Logic ---
+        themeToggle.onclick = () => {
+            const isDark = document.body.getAttribute('data-theme') !== 'light';
+            document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            themeIcon.textContent = isDark ? '☀️' : '🌙';
+            themeText.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        };
+
+        // --- View Switching Logic ---
+        function showView(viewName) {
+            [chatView, journalView, insightsView, settingsView].forEach(v => v.style.display = 'none');
+            [chatNav, journalNav, insightsNav, settingsNav].forEach(n => n.classList.remove('active'));
+            
+            if (viewName === 'chat') {
+                chatView.style.display = 'flex';
+                chatNav.classList.add('active');
+                scrollToBottom();
+            } else if (viewName === 'journal') {
+                journalView.style.display = 'flex';
+                journalNav.classList.add('active');
+                loadJournals();
+            } else if (viewName === 'insights') {
+                insightsView.style.display = 'flex';
+                insightsNav.classList.add('active');
+                loadInsights();
+            } else if (viewName === 'settings') {
+                settingsView.style.display = 'flex';
+                settingsNav.classList.add('active');
+            }
+        }
+
+        chatNav.onclick = () => showView('chat');
+        journalNav.onclick = () => showView('journal');
+        insightsNav.onclick = () => showView('insights');
+        settingsNav.onclick = () => showView('settings');
+
+        // --- Journaling Logic ---
+        const saveJournalBtn = document.getElementById('save-journal-btn');
+        const journalTitle = document.getElementById('journal-title');
+        const journalContent = document.getElementById('journal-content');
+        const journalList = document.getElementById('journal-list');
+
+        async function loadJournals() {
+            const response = await fetch('/api/journals');
+            const data = await response.json();
+            journalList.innerHTML = data.journals.map(j => `
+                <div class="journal-card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); padding: 20px; border-radius: 16px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <h4 style="color: var(--primary);">${j.title || 'Daily Reflection'}</h4>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">${new Date(j.timestamp).toLocaleDateString()}</span>
+                    </div>
+                    <p style="font-size: 0.95rem; line-height: 1.5; color: #cbd5e1;">${j.content}</p>
+                    <div style="margin-top: 12px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+                        <span style="color: var(--text-muted);">Mood:</span>
+                        <span style="padding: 2px 8px; border-radius: 4px; background: rgba(139, 92, 246, 0.1); color: var(--primary);">${j.mood_tag.toUpperCase()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        saveJournalBtn.onclick = async () => {
+            const title = journalTitle.value.trim();
+            const content = journalContent.value.trim();
+            if (!content) return;
+
+            saveJournalBtn.disabled = true;
+            saveJournalBtn.textContent = "Analyzing...";
+
+            try {
+                const response = await fetch('/api/save_journal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content })
+                });
+                const data = await response.json();
+                
+                // Show AI Feedback as a toast or alert (simplified here)
+                alert("AI Reflection: " + data.feedback);
+                
+                journalTitle.value = '';
+                journalContent.value = '';
+                loadJournals();
+            } catch (err) {
+                alert("Could not save journal. Please try again.");
+            } finally {
+                saveJournalBtn.disabled = false;
+                saveJournalBtn.textContent = "Save Entry";
+            }
+        };
+
+        // --- Insights Logic ---
+        async function loadInsights() {
+            const response = await fetch('/api/mood_trends');
+            const data = await response.json();
+            
+            const ctx = document.getElementById('moodChart').getContext('2d');
+            
+            if (moodChart) moodChart.destroy();
+            
+            const labels = data.history.map(h => new Date(h.timestamp).toLocaleDateString());
+            const scores = data.history.map(h => h.score);
+
+            moodChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Mood Score',
+                        data: scores,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#8b5cf6',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: -1, max: 1, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Daily Check-in Trigger
+        checkinNav.onclick = () => {
+            showView('chat');
+            appendMessage('user', "I'd like to do my daily check-in.");
+            sendToServer("I'd like to do my daily check-in. Please guide me through a quick mood check-in.");
+        };
+
+        // --- Core Chat Logic ---
         const scrollToBottom = () => {
             chatHistory.scrollTop = chatHistory.scrollHeight;
         };
-
-        // Initialize scroll
         scrollToBottom();
+
+        // Speech Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                voiceBtn.classList.add('active');
+                messageInput.placeholder = "Listening...";
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                messageInput.value = transcript;
+                chatForm.dispatchEvent(new Event('submit'));
+            };
+
+            recognition.onend = () => {
+                voiceBtn.classList.remove('active');
+                messageInput.placeholder = "Share your thoughts...";
+            };
+
+            voiceBtn.onclick = () => {
+                recognition.start();
+            };
+        } else {
+            voiceBtn.style.display = 'none';
+        }
+
+        // TTS Toggle
+        ttsToggle.onclick = () => {
+            isAutoSpeak = !isAutoSpeak;
+            ttsToggle.style.color = isAutoSpeak ? 'var(--primary)' : 'var(--text-muted)';
+            if (!isAutoSpeak) window.speechSynthesis.cancel();
+        };
+
+        function speak(text) {
+            if (!isAutoSpeak) return;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
 
         function appendMessage(role, content) {
             const wrapper = document.createElement('div');
@@ -82,29 +365,19 @@
             msg.textContent = content;
             
             wrapper.appendChild(msg);
-            
-            // Insert before typing indicator
             chatHistory.insertBefore(wrapper, typingIndicator);
             
-            // Remove empty state if it exists
             const emptyState = document.querySelector('.empty-state');
             if (emptyState) emptyState.remove();
             
             scrollToBottom();
+            
+            if (role === 'assistant') {
+                speak(content);
+            }
         }
 
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const message = messageInput.value.trim();
-            if (!message) return;
-            
-            // UI Feedback
-            appendMessage('user', message);
-            messageInput.value = '';
-            messageInput.disabled = true;
-            sendBtn.disabled = true;
-            
-            // Show typing indicator
+        async function sendToServer(message) {
             typingIndicator.style.display = 'flex';
             scrollToBottom();
             
@@ -121,16 +394,27 @@
                 const data = await response.json();
                 typingIndicator.style.display = 'none';
                 appendMessage('assistant', data.reply);
+                
+                // --- Emotion-based UI color change ---
+                document.body.classList.remove('mood-negative', 'mood-positive', 'mood-neutral');
+                document.body.classList.add(`mood-${data.sentiment}`);
             } catch (err) {
-                console.error('Fetch error:', err);
                 typingIndicator.style.display = 'none';
-                appendMessage('assistant', 'Sorry, I encountered an issue. Please try again.');
-            } finally {
-                messageInput.disabled = false;
-                sendBtn.disabled = false;
-                messageInput.focus();
+                appendMessage('assistant', 'I am sorry, I had trouble connecting. Please try again.');
             }
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            appendMessage('user', message);
+            messageInput.value = '';
+            
+            await sendToServer(message);
         });
     </script>
 </body>
 </html>
+

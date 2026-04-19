@@ -1,0 +1,36 @@
+/* themes.css */
+
+:root {
+    /* Dark Theme - Midnight & Violet */
+    --bg-main: #0a0a0f;
+    --bg-gradient: radial-gradient(circle at top right, #1e1b4b, #0a0a0f);
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --primary: #a78bfa; /* Softer violet */
+    --primary-glow: rgba(167, 139, 250, 0.3);
+    --accent: #fb7185;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --bot-msg-bg: rgba(255, 255, 255, 0.05);
+    --user-msg-bg: linear-gradient(135deg, #7c3aed, #4c1d95);
+    --glass-blur: 24px;
+}
+
+[data-theme="light"] {
+    /* Light Theme - Soft Slate & Pearl */
+    --bg-main: #f8fafc;
+    --bg-gradient: radial-gradient(circle at top right, #f1f5f9, #f8fafc);
+    --card-bg: #ffffff;
+    --card-border: rgba(0, 0, 0, 0.06);
+    --primary: #6366f1;
+    --primary-glow: rgba(99, 102, 241, 0.15);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --bot-msg-bg: #f1f5f9;
+    --user-msg-bg: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+/* Mood-Based Dynamic Accents */
+.mood-negative { --primary: #f43f5e; --primary-glow: rgba(244, 63, 94, 0.3); }
+.mood-positive { --primary: #10b981; --primary-glow: rgba(16, 185, 129, 0.3); }
+.mood-neutral { --primary: #a78bfa; --primary-glow: rgba(167, 139, 250, 0.3); }
