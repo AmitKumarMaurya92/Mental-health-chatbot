@@ -2,93 +2,82 @@
 
 An empathetic, AI-powered mental health companion built with **Python**, **FastAPI**, and **Google Gemini 1.5 Flash**. This companion provides a gentle, supportive space with emotion-sensitive responses, real-time safety checks, seamless voice interaction, and persistent mood tracking.
 
-![UI Screenshot](file:///C:/Users/amitk/.gemini/antigravity/brain/84d49de7-72cb-4e7d-b0da-e563e70d8466/verified_ui_changes_1776612157489.png)
+![UI Screenshot](https://raw.githubusercontent.com/AmitKumarMaurya92/Mental-health-chatbot/main/ui/static/screenshot_mockup.png)
+
+## 🌟 Key Features
+
+- **🔐 Secure Authentication**: Multi-user support with encrypted password hashing and session-based isolation.
+- **🧠 Empathetic AI**: Powered by Google Gemini 1.5 Flash for nuanced, supportive dialogue.
+- **🎭 Emotion-Driven UI**: Real-time sentiment analysis that dynamically shifts the UI theme to match your mood.
+- **📊 Mood Analytics**: Interactive dashboard with Chart.js to track emotional trends over 7 days.
+- **🎙️ Seamless Voice**: Integrated Web Speech API for natural voice-to-text and text-to-voice interaction.
+- **📝 Weekly Summaries**: AI-generated reports summarizing your emotional journey and progress.
 
 ## ⚙️ How It Works
 
-The application operates through a seamless pipeline designed for empathy and responsiveness:
+1.  **Input**: Users interact via text or voice.
+2.  **Emotion Processing**: Every message is analyzed using `vaderSentiment` and custom heuristics.
+3.  **AI Orchestration**: Context-aware prompts are sent to Gemini to generate supportive responses.
+4.  **Reactive UI**: Glassmorphic interface updates dynamically based on detected emotions (Happy, Sad, Neutral).
+5.  **Persistence**: All interactions and mood scores are securely stored in a SQLite database.
 
-1.  **Input**: Users interact via text or voice (using Browser Speech API).
-2.  **Emotion Processing**: Every message is analyzed in real-time using `vaderSentiment` and custom emotion detection services to identify the user's mood.
-3.  **AI Orchestration**: The message, along with conversation history and sentiment data, is sent to **Google Gemini 1.5 Flash**. The AI is instructed to respond as a supportive mental health companion.
-4.  **Reactive UI**: The frontend receives the response and the detected emotion, triggering a dynamic CSS theme shift (e.g., calming blues for neutral, vibrant greens for happy, or warm oranges for sadness).
-5.  **Analytics & Memory**: Responses and mood scores are persisted in a **SQLite** database. A background scheduler also runs to manage daily reminders and weekly summary generation.
+## 🛠️ Technology Stack
 
-## 🛠️ Technology Used
-
-### **Backend**
-- **Python 3.10+**: Core logic.
-- **FastAPI**: High-performance web framework for APIs and routing.
-- **Google Generative AI**: Gemini 1.5 Flash for empathetic dialogue.
-- **VADER Sentiment**: For real-time emotional analysis.
-- **SQLite**: Lightweight persistent storage.
-- **Schedule**: For background mental health check-ins.
-
-### **Frontend**
-- **HTML5 & CSS3**: Custom glassmorphic design system.
-- **Vanilla JavaScript**: Real-time UI updates and AJAX communication.
-- **Jinja2**: Server-side templating.
-- **Chart.js**: Interactive mood visualization dashboard.
-
-### **Voice & Media**
-- **Web Speech API**: Browser-based speech-to-text.
-- **SpeechRecognition & pyttsx3**: Backend fallback for CLI mode.
+| Layer | Technologies |
+| :--- | :--- |
+| **Backend** | Python, FastAPI, Starlette (Sessions), Pydantic |
+| **AI/ML** | Google Gemini 1.5 Flash, VADER Sentiment |
+| **Database** | SQLite, SQLAlchemy |
+| **Security** | BCrypt, Passlib, ItsDangerous |
+| **Frontend** | HTML5, CSS3 (Glassmorphism), Vanilla JS, Jinja2 |
+| **Visualization** | Chart.js |
 
 ## 🚀 Setup & Installation
 
-Follow these steps to get your companion up and running locally:
-
 ### **1. Prerequisites**
-- Python 3.10 or higher installed.
-- A Google AI Studio API Key (Get it from [aistudio.google.com](https://aistudio.google.com/)).
+- Python 3.10+
+- Google AI Studio API Key ([Get it here](https://aistudio.google.com/))
 
-### **2. Clone the Repository**
+### **2. Local Installation**
 ```bash
 git clone https://github.com/AmitKumarMaurya92/Mental-health-chatbot.git
 cd mental-health-chatbot
-```
-
-### **3. Environment Setup**
-Create a virtual environment and install dependencies:
-```bash
 python -m venv .venv
-# On Windows:
-.venv\Scripts\activate
-# On Mac/Linux:
-source .venv/bin/activate
-
+# Activate venv (Windows: .venv\Scripts\activate | Mac/Linux: source .venv/bin/activate)
 pip install -r requirements.txt
 ```
 
-### **4. Configuration**
-Create a `.env` file in the root directory and add your API keys:
+### **3. Configuration**
+Create a `.env` file in the root:
 ```env
-GEMINI_API_KEY_1=your_gemini_api_key_here
+GEMINI_API_KEY_1=your_api_key_here
 ```
 
-### **5. Run the Application**
+### **4. Run**
 ```bash
 python app.py
 ```
-The application will be available at `http://localhost:8000`.
+Visit `http://localhost:8000`.
 
-## 🎮 Usage
+## ☁️ Deployment (Render)
 
-- **Web Mode**: Simply open `http://localhost:8000` in your browser.
-- **CLI Mode**: Run `python app.py --cli` to interact directly in your terminal.
-- **Voice Mode**: Click the microphone icon in the web UI or type `voice` in CLI mode to toggle voice interactions.
+This app is optimized for deployment on [Render](https://render.com).
+
+1.  **Environment Variables**: Add `GEMINI_API_KEY_1` in the Render dashboard.
+2.  **Build Command**: `pip install -r requirements.txt`
+3.  **Start Command**: `gunicorn -w 1 -k uvicorn.workers.UvicornWorker --timeout 120 app:app`
 
 ## 📁 Project Structure
 ```text
-mental-health-voice-chatbot/
-├── app.py                     # Main entry point & FastAPI setup
+├── app.py                     # Main FastAPI entry point
 ├── services/                  # AI, Sentiment, and DB services
 ├── dashboard/                 # Analytics & Mood summary logic
-├── ui/                        # Templates (Jinja2) and Static assets (CSS/JS)
-├── data/                      # SQLite database files
+├── ui/                        # Templates (Jinja2) and Static assets
+├── data/                      # SQLite database storage
 ├── voice/                     # Voice input/output handlers
-└── utils/                     # Utility functions
+└── utils/                     # Security & Utility helpers
 ```
 
 ---
-***Disclaimer**: This AI is for companionship and emotional support only. It is NOT a replacement for professional medical advice, diagnosis, or treatment. If you are in a crisis, please contact local emergency services or a mental health professional immediately.*
+***Disclaimer**: This AI is for companionship and emotional support only. It is NOT a replacement for professional medical advice, diagnosis, or treatment. If you are in a crisis, please contact local emergency services immediately.*
+
