@@ -128,6 +128,21 @@
         .divider:not(:empty)::after {
             margin-left: .5em;
         }
+        .made-by {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        .made-by:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -166,5 +181,7 @@
             }
         </script>
     </div>
+
+    <div class="made-by">Amit 🖤</div>
 </body>
 </html>
