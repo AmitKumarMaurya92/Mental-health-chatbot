@@ -1,11 +1,19 @@
 import sys
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from services.ai_service import generate_response
+from services.memory_service import load_history
 from voice.input import listen_and_recognize
 from voice.output import speak_text
 
 app = FastAPI(title="Mental Health AI Companion")
+
+# Setup templates and static files
+app.mount("/static", StaticFiles(directory="ui/static"), name="static")
+templates = Jinja2Templates(directory="ui/templates")
 
 class ChatRequest(BaseModel):
     message: str
@@ -15,12 +23,26 @@ class ChatResponse(BaseModel):
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
-    """Basic text chatbot endpoint."""
+    """Basic text chatbot API endpoint."""
     if not request.message:
         raise HTTPException(status_code=400, detail="Message cannot be empty")
         
     reply = generate_response(request.message)
     return ChatResponse(reply=reply)
+
+@app.get("/", response_class=HTMLResponse)
+async def home_ui(request: Request):
+    """Web UI Home Page."""
+    history = load_history()
+    return templates.TemplateResponse("index.html", {"request": request, "history": history})
+
+@app.post("/chat_ui", response_class=HTMLResponse)
+async def chat_ui_endpoint(request: Request, message: str = Form(...)):
+    """Handles form submissions from the Web UI."""
+    if message.strip():
+        generate_response(message)
+    # Redirect back to home to reload the updated history
+    return RedirectResponse(url="/", status_code=303)
 
 def run_cli():
     """Runs the chatbot in an interactive CLI mode with voice support."""
@@ -55,8 +77,7 @@ def run_cli():
         response = generate_response(user_input)
         print(f"\nAI: {response}")
         
-        # Always speak if voice mode is on, or maybe always speak in CLI? 
-        # Let's speak if voice mode is on.
+        # Always speak if voice mode is on
         if use_voice:
             speak_text(response)
 

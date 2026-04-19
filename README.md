@@ -10,7 +10,7 @@ An AI-powered mental health chatbot built with Python, FastAPI, and OpenAI. It a
 - [x] **Step 4:** Add suggestions
 - [x] **Step 5:** Add voice input/output
 - [x] **Step 6:** Add memory (context)
-- [ ] **Step 7:** Optional UI
+- [x] **Step 7:** Optional UI
 
 ## Features
 - **Human-like Conversation**: Uses OpenAI API for intelligence.

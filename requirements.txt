@@ -7,4 +7,6 @@ vaderSentiment
 SpeechRecognition
 pyttsx3
 pyaudio
+jinja2
+python-multipart
 
