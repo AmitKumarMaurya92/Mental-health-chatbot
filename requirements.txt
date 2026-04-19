@@ -9,4 +9,4 @@ pyttsx3
 pyaudio
 jinja2
 python-multipart
-
+google-generativeai

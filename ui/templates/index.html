@@ -34,27 +34,103 @@
                     </div>
                 </div>
             {% endfor %}
+            
+            <!-- Typing Indicator (hidden by default) -->
+            <div id="typing-indicator" class="message-wrapper bot-wrapper" style="display: none;">
+                <div class="message bot-message typing">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+
             <!-- Anchor to scroll to bottom naturally -->
             <div id="bottom"></div>
         </main>
 
         <footer class="chat-input-area">
-            <form action="/chat_ui" method="POST" class="input-form">
-                <input type="text" name="message" placeholder="Type how you're feeling..." autocomplete="off" required autofocus>
-                <button type="submit">
+            <form id="chat-form" class="input-form">
+                <input type="text" name="message" id="message-input" placeholder="Type how you're feeling..." autocomplete="off" required autofocus>
+                <button type="submit" id="send-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             </form>
         </footer>
     </div>
 
-    <!-- Simple trick to auto-scroll to bottom on page load without JS script tag logic -->
-    <style>
-        html { scroll-behavior: smooth; }
-    </style>
     <script>
-        // Only one line of JS to ensure we start at the bottom of the chat history
-        window.scrollTo(0, document.body.scrollHeight);
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        const chatHistory = document.querySelector('.chat-history');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const sendBtn = document.getElementById('send-btn');
+
+        // Scroll to bottom helper
+        const scrollToBottom = () => {
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        };
+
+        // Initialize scroll
+        scrollToBottom();
+
+        function appendMessage(role, content) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${role === 'user' ? 'user-wrapper' : 'bot-wrapper'}`;
+            
+            const msg = document.createElement('div');
+            msg.className = `message ${role === 'user' ? 'user-message' : 'bot-message'}`;
+            msg.textContent = content;
+            
+            wrapper.appendChild(msg);
+            
+            // Insert before typing indicator
+            chatHistory.insertBefore(wrapper, typingIndicator);
+            
+            // Remove empty state if it exists
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+            
+            scrollToBottom();
+        }
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // UI Feedback
+            appendMessage('user', message);
+            messageInput.value = '';
+            messageInput.disabled = true;
+            sendBtn.disabled = true;
+            
+            // Show typing indicator
+            typingIndicator.style.display = 'flex';
+            scrollToBottom();
+            
+            try {
+                const response = await fetch('/chat_ui', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new URLSearchParams({ message })
+                });
+                
+                const data = await response.json();
+                typingIndicator.style.display = 'none';
+                appendMessage('assistant', data.reply);
+            } catch (err) {
+                console.error('Fetch error:', err);
+                typingIndicator.style.display = 'none';
+                appendMessage('assistant', 'Sorry, I encountered an issue. Please try again.');
+            } finally {
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                messageInput.focus();
+            }
+        });
     </script>
 </body>
 </html>

@@ -36,7 +36,7 @@ async def home_ui(request: Request):
     history = load_history()
     return templates.TemplateResponse(request=request, name="index.html", context={"history": history})
 
-@app.post("/chat_ui", response_class=HTMLResponse)
+@app.post("/chat_ui")
 async def chat_ui_endpoint(request: Request, message: str = Form(...)):
     """Handles form submissions from the Web UI."""
     reply = ""
@@ -45,7 +45,8 @@ async def chat_ui_endpoint(request: Request, message: str = Form(...)):
     
     # Check if request is AJAX
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return {"reply": reply}
+        from fastapi.responses import JSONResponse
+        return JSONResponse(content={"reply": reply})
         
     # Redirect back to home to reload the updated history
     return RedirectResponse(url="/", status_code=303)
