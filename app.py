@@ -1,6 +1,7 @@
 import sys
 from fastapi import FastAPI, HTTPException, Request, Form, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+import traceback
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -15,6 +16,15 @@ app = FastAPI(title="Mental Health AI Companion")
 
 # Enable sessions
 app.add_middleware(SessionMiddleware, secret_key="secure_session_key_for_mental_health_companion")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"ERROR: Unhandled exception: {exc}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error", "error": str(exc), "traceback": traceback.format_exc()},
+    )
 
 # Setup templates and static files
 app.mount("/static", StaticFiles(directory="ui/static"), name="static")
@@ -164,7 +174,7 @@ async def weekly_report(request: Request):
     
     history = load_history(username=username)
     # Format history as text for the AI
-    history_text = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-20:]])
+    history_text = "\n".join([f"{msg['sender']}: {msg['text']}" for msg in history[-20:]])
     
     if not history_text.strip():
         summary = "Start chatting with me to get a weekly emotional summary!"

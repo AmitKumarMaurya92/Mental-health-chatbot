@@ -104,8 +104,8 @@ def generate_response(user_message: str, username: str = "default") -> str:
         history = load_history(username)[-10:]
         messages = [{"role": "system", "content": system_prompt}]
         for msg in history[:-1]:
-            role = "user" if msg["role"] == "user" else "assistant"
-            messages.append({"role": role, "content": msg["content"]})
+            role = "user" if msg["sender"] == "user" else "assistant"
+            messages.append({"role": role, "content": msg["text"]})
         messages.append({"role": "user", "content": user_message})
 
         try:
@@ -143,8 +143,8 @@ def generate_response(user_message: str, username: str = "default") -> str:
     chat_history = []
     # Gemini history shouldn't include the current message yet
     for msg in history[:-1]: 
-        role = "user" if msg["role"] == "user" else "model"
-        chat_history.append({"role": role, "parts": [msg["content"]]})
+        role = "user" if msg["sender"] == "user" else "model"
+        chat_history.append({"role": role, "parts": [msg["text"]]})
     
     try:
         # Start a chat session with history

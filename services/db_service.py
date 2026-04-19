@@ -119,7 +119,7 @@ def load_history_db(limit=20, username="default"):
     conn.close()
     
     # Return in chronological order
-    history = [{"role": row["role"], "content": row["content"], "timestamp": row["timestamp"]} for row in rows]
+    history = [{"sender": row["role"], "text": row["content"], "timestamp": row["timestamp"]} for row in rows]
     return history[::-1]
 
 def save_journal(content, title=None, mood_tag=None, username="default"):
