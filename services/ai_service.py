@@ -7,6 +7,20 @@ from services.suggestion_service import get_suggestion_for_mood
 from services.memory_service import load_history, save_message
 from services.db_service import log_mood
 import random
+import unicodedata
+
+def detect_language(text: str) -> str:
+    """Detects if the user's message is primarily Hindi, English, or Hinglish."""
+    hindi_chars = sum(1 for ch in text if '\u0900' <= ch <= '\u097F')
+    total_alpha = sum(1 for ch in text if ch.isalpha())
+    if total_alpha == 0:
+        return "English"
+    hindi_ratio = hindi_chars / total_alpha
+    if hindi_ratio > 0.4:
+        return "Hindi"
+    elif hindi_ratio > 0.1:
+        return "Hinglish (a mix of Hindi and English)"
+    return "English"
 
 # Initialize Groq client if available
 groq_client = OpenAI(
@@ -72,14 +86,17 @@ def generate_response(user_message: str, username: str = "default") -> str:
     # 2.5 Log mood for tracking
     log_mood(sentiment_scores['compound'], sentiment_label, username)
     
-    # 3. Build system prompt
+    # 3. Detect language and build system prompt
+    detected_lang = detect_language(user_message)
     system_prompt = (
         f"You are a gentle, supportive, and empathetic mental health companion speaking to {username}. "
         f"The user's current emotional tone is: {sentiment_label.upper()}. "
         "Adapt your response accordingly. Be extra empathetic if they are struggling. "
         "Keep responses concise, warm, and conversational. "
         f"Naturally suggest this tip if appropriate: '{suggestion}'. "
-        "IMPORTANT: If the user speaks in Hindi, English, or a mix of both (Hinglish), reply in the same language. Always support English and Hindi."
+        f"CRITICAL LANGUAGE RULE: The user's message is written in {detected_lang}. "
+        f"You MUST reply ONLY in {detected_lang}. "
+        "Do NOT mix languages. Do NOT translate. Match the user's language exactly."
     )
     
     # 4. Use Groq if available
