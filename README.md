@@ -1,6 +1,6 @@
-# AI Voice-Based Mental Health Companion ✨
+# MindMate AI ✨
 
-An empathetic, AI-powered mental health companion built with **Python**, **FastAPI**, and **Google Gemini 1.5 Flash**. This companion provides a gentle, supportive space with emotion-sensitive responses, real-time safety checks, seamless voice interaction, and persistent mood tracking.
+**MindMate AI** is an empathetic, AI-powered mental health companion built with **Python**, **FastAPI**, and **Google Gemini 1.5 Flash**. This companion provides a gentle, supportive space with emotion-sensitive responses, real-time safety checks, seamless voice interaction, and persistent mood tracking.
 
 ![UI Screenshot](https://raw.githubusercontent.com/AmitKumarMaurya92/Mental-health-chatbot/main/ui/static/screenshot_mockup.png)
 

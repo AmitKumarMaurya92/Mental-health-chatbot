@@ -6,7 +6,7 @@ from services.ai_service import get_gemini_model, groq_client
 def generate_weekly_summary(history_text):
     """Uses Gemini (or Groq fallback) to summarize the week's emotional state."""
     system_prompt = (
-        "You are an AI Weekly Report Generator for a mental health companion app. "
+        "You are an AI Weekly Report Generator for MindMate AI. "
         "Analyze the provided conversation history and generate a short, insightful summary. "
         "Format your response with the following 3 short sections using markdown: "
         "\n\n**📈 Mood Trends:**\n(Summarize how their mood has been)"

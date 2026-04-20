@@ -16,10 +16,10 @@ from voice.output import speak_text
 
 def run_checkin(username="default"):
     print("\n" + "="*40)
-    print(f"🌟 DAILY MENTAL HEALTH CHECK-IN FOR {username.upper()} 🌟")
+    print(f"🌟 MINDMATE AI DAILY CHECK-IN FOR {username.upper()} 🌟")
     print("="*40 + "\n")
     
-    greeting = "Hello! I'm your AI Companion. How are you feeling today? (Type your response or 'exit' to quit)"
+    greeting = f"Hello {username}! I'm MindMate AI. How are you feeling today? (Type your response or 'exit' to quit)"
     print(f"AI: {greeting}")
     speak_text(greeting)
     

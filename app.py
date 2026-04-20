@@ -12,7 +12,7 @@ from services.db_service import get_mood_history
 from voice.input import listen_and_recognize
 from voice.output import speak_text
 
-app = FastAPI(title="Mental Health AI Companion")
+app = FastAPI(title="MindMate AI")
 
 # Enable sessions
 app.add_middleware(SessionMiddleware, secret_key="secure_session_key_for_mental_health_companion")
@@ -199,7 +199,7 @@ async def weekly_report(request: Request):
 
 def run_cli(username="default"):
     """Runs the chatbot in an interactive CLI mode with voice support."""
-    print(f"Welcome to your Mental Health AI Companion, {username}!")
+    print(f"Welcome to MindMate AI, {username}!")
     print("Type 'exit' to quit. Type 'voice' to toggle voice input.")
     
     use_voice = False
@@ -246,7 +246,7 @@ def run_scheduler():
 
 def daily_reminder():
     """Placeholder for a daily reminder action (e.g., logging or notification)."""
-    print("⏰ [REMINDER] Time for your daily mental health check-in!")
+    print("⏰ [REMINDER] Time for your MindMate AI check-in!")
 
 # Schedule the reminder (e.g., every day at 10:00 AM)
 schedule.every().day.at("10:00").do(daily_reminder)

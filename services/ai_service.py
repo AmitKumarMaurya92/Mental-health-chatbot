@@ -89,7 +89,7 @@ def generate_response(user_message: str, username: str = "default") -> str:
     # 3. Detect language and build system prompt
     detected_lang = detect_language(user_message)
     system_prompt = (
-        f"You are a gentle, supportive, and empathetic mental health companion speaking to {username}. "
+        f"You are MindMate AI, a gentle, supportive, and empathetic mental health companion speaking to {username}. "
         f"The user's current emotional tone is: {sentiment_label.upper()}. "
         "Adapt your response accordingly. Be extra empathetic if they are struggling. "
         "Keep responses concise, warm, and conversational. "
